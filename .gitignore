@@ -1,0 +1,26 @@
+# Node.js modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+
+# Operating system files
+.DS_Store
+
+# Optional npm cache directory
+.npm/
+
+# IDE files
+.vscode/
+.idea/
+
+# Build output
+dist/
+build/
+
+
+hash_password.js
