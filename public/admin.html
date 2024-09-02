@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Admin Panel</h1>
+    <div id="login-section">
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button id="login-button">Login</button>
+    </div>
+
+    <div id="group-management" style="display: none;">
+        <h2>Select Group</h2>
+        <select id="group-select"></select>
+        <button id="select-group">Select Group</button>
+    </div>
+
+    <div id="student-management" style="display: none;">
+        <h3>Add Student</h3>
+        <input type="text" id="student-first-name" placeholder="First Name">
+        <input type="text" id="student-middle-name" placeholder="Middle Name">
+        <input type="text" id="student-last-name" placeholder="Last Name">
+        <button id="add-student">Add Student</button>
+
+        <h3>Students</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Middle Name</th>
+                    <th>Last Name</th>
+                    <th>Penguin Count</th>
+                    <th>Actions</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody id="students-list">
+                <!-- Здесь будут отображаться студенты -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Модальное окно для подтверждения удаления -->
+    <div id="delete-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span id="close-modal" class="close">&times;</span>
+            <p>Are you sure you want to delete this student?</p>
+            <button id="confirm-delete">Yes</button>
+            <button id="cancel-delete">No</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
