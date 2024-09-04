@@ -1,15 +1,16 @@
 const mysql = require('mysql2');
 
-// Create a pool of connections
-const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    waitForConnections: true,
-    connectionLimit: 10,  // You can adjust this number based on your expected load
-    queueLimit: 0
+const db = mysql.createConnection({
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || 'root',
+    database: process.env.DB_NAME || 'penguin_tracker',
+    port: process.env.DB_PORT || 3306
 });
 
-module.exports = pool.promise();  // Use the promise-based pool
+db.connect((err) => {
+    if (err) throw err;
+    console.log('Connected to MySQL Database');
+});
 
+module.exports = db;

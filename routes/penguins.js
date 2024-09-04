@@ -1,48 +1,37 @@
 const express = require('express');
 const router = express.Router();
+const db = require('../models/db');
+const jwt = require('jsonwebtoken');
 
-const db = require('../models/db');  // Use the connection pool with promises
+// Middleware для проверки JWT
+router.use((req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
 
-// Получение списка пингвинов для студента
-router.get('/:studentId', async (req, res) => {
-    const studentId = req.params.studentId;
-    const query = 'SELECT * FROM penguins WHERE student_id = ?';
+    if (!token) return res.status(401).send('Access denied. No token provided.');
 
     try {
-        const [results] = await db.query(query, [studentId]);
-        res.json(results);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        next();
     } catch (err) {
-        console.error('Database error:', err);
-        res.status(500).send('Server error');
+        console.error('Invalid token:', err);
+        res.status(400).send('Invalid token.');
     }
 });
 
-// Добавление пингвина
-router.post('/', async (req, res) => {
-    const { student_id, count } = req.body;
-    const query = 'INSERT INTO penguins (student_id, count) VALUES (?, ?)';
+// Добавление пингвина студенту
+router.post('/add', (req, res) => {
+    const { student_id } = req.body;
+    const query = 'INSERT INTO penguins (student_id, count) VALUES (?, 1) ON DUPLICATE KEY UPDATE count = count + 1';
 
-    try {
-        await db.query(query, [student_id, count]);
-        res.status(201).send('Penguin added');
-    } catch (err) {
-        console.error('Database error:', err);
-        res.status(500).send('Server error');
-    }
-});
-
-// Удаление пингвина
-router.delete('/:id', async (req, res) => {
-    const penguinId = req.params.id;
-
-    try {
-        await db.query('DELETE FROM penguins WHERE id = ?', [penguinId]);
-        res.status(200).send('Penguin deleted');
-    } catch (err) {
-        console.error('Database error:', err);
-        res.status(500).send('Server error');
-    }
-
+    db.query(query, [student_id], (err, result) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).send('Server error');
+        }
+        res.status(200).send('Penguin added');
+    });
 });
 
 module.exports = router;
