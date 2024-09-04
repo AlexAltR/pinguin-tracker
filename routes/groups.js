@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+
 const db = require('../models/db');  // Use the connection pool with promises
 
 // Получение списка групп
@@ -58,5 +59,6 @@ router.delete('/:id', async (req, res) => {
         res.status(500).send('Server error');
     }
 });
+
 
 module.exports = router;

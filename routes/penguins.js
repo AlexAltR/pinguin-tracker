@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+
 const db = require('../models/db');  // Use the connection pool with promises
 
 // Получение списка пингвинов для студента
@@ -41,6 +42,7 @@ router.delete('/:id', async (req, res) => {
         console.error('Database error:', err);
         res.status(500).send('Server error');
     }
+
 });
 
 module.exports = router;

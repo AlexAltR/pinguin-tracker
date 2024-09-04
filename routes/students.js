@@ -1,10 +1,12 @@
 const express = require('express');
 const router = express.Router();
+
 const db = require('../models/db');  // Now this is the connection pool with promises
 const jwt = require('jsonwebtoken');
 
 // Получение списка студентов в группе для публичного доступа
 router.get('/public/:groupId', async (req, res) => {
+
     const groupId = req.params.groupId;
     const query = `
         SELECT students.first_name, students.middle_name, students.last_name,
@@ -44,7 +46,9 @@ router.use((req, res, next) => {
 });
 
 // Получение списка студентов в группе
+
 router.get('/:groupId', async (req, res) => {
+
     const groupId = req.params.groupId;
     const query = `
         SELECT students.id, students.first_name, students.middle_name, students.last_name,
@@ -102,5 +106,6 @@ router.delete('/:id', async (req, res) => {
         res.status(500).send('Server error');
     }
 });
+
 
 module.exports = router;
