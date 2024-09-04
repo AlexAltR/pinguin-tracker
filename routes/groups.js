@@ -1,55 +1,62 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../models/db');
-const jwt = require('jsonwebtoken');
-
-// Middleware для проверки JWT (только для защищенных маршрутов)
-router.use((req, res, next) => {
-    const authHeader = req.headers['authorization'];
-    const token = authHeader && authHeader.split(' ')[1];
-
-    if (!token && req.path !== '/public') {
-        return res.status(401).send('Access denied. No token provided.');
-    }
-
-    if (token) {
-        try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = decoded;
-        } catch (err) {
-            return res.status(400).send('Invalid token.');
-        }
-    }
-
-    next();
-});
+const db = require('../models/db');  // Use the connection pool with promises
 
 // Получение списка групп
-router.get('/', (req, res) => {
-    const teacherId = req.user.id;
-    const query = 'SELECT id, `name` FROM `groups` WHERE teacher_id = ?';
+router.get('/public', async (req, res) => {
+    const query = 'SELECT * FROM groups';
 
-    db.query(query, [teacherId], (err, results) => {
-        if (err) {
-            console.error('Database error:', err);
-            return res.status(500).send('Server error');
-        }
+    try {
+        const [results] = await db.query(query);
         res.json(results);
-    });
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(500).send('Server error');
+    }
 });
 
-// Получение списка групп для публичного доступа
-router.get('/public', (req, res) => {
-    const query = 'SELECT id, `name` FROM `groups`';
+// Получение группы по ID
+router.get('/:id', async (req, res) => {
+    const groupId = req.params.id;
+    const query = 'SELECT * FROM groups WHERE id = ?';
 
-    db.query(query, (err, results) => {
-        if (err) {
-            console.error('Database error:', err);
-            return res.status(500).send('Server error');
+    try {
+        const [results] = await db.query(query, [groupId]);
+        if (results.length === 0) {
+            return res.status(404).send('Group not found');
         }
-        res.json(results);
-    });
+        res.json(results[0]);
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(500).send('Server error');
+    }
 });
 
+// Добавление группы
+router.post('/', async (req, res) => {
+    const { name } = req.body;
+    const query = 'INSERT INTO groups (name) VALUES (?)';
+
+    try {
+        await db.query(query, [name]);
+        res.status(201).send('Group added');
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(500).send('Server error');
+    }
+});
+
+// Удаление группы
+router.delete('/:id', async (req, res) => {
+    const groupId = req.params.id;
+
+    try {
+        await db.query('DELETE FROM groups WHERE id = ?', [groupId]);
+        res.status(200).send('Group deleted');
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(500).send('Server error');
+    }
+});
 
 module.exports = router;

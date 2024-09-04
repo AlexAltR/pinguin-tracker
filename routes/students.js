@@ -1,11 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const db = require('../models/db');
+const db = require('../models/db');  // Now this is the connection pool with promises
 const jwt = require('jsonwebtoken');
 
-
 // Получение списка студентов в группе для публичного доступа
-router.get('/public/:groupId', (req, res) => {
+router.get('/public/:groupId', async (req, res) => {
     const groupId = req.params.groupId;
     const query = `
         SELECT students.first_name, students.middle_name, students.last_name,
@@ -17,13 +16,13 @@ router.get('/public/:groupId', (req, res) => {
         ORDER BY penguin_count DESC;
     `;
 
-    db.query(query, [groupId], (err, results) => {
-        if (err) {
-            console.error('Database error:', err);
-            return res.status(500).send('Server error');
-        }
+    try {
+        const [results] = await db.query(query, [groupId]);
         res.json(results);
-    });
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(500).send('Server error');
+    }
 });
 
 // Middleware для проверки JWT (применяется только к защищенным маршрутам)
@@ -45,7 +44,7 @@ router.use((req, res, next) => {
 });
 
 // Получение списка студентов в группе
-router.get('/:groupId', (req, res) => {
+router.get('/:groupId', async (req, res) => {
     const groupId = req.params.groupId;
     const query = `
         SELECT students.id, students.first_name, students.middle_name, students.last_name,
@@ -57,78 +56,51 @@ router.get('/:groupId', (req, res) => {
         ORDER BY penguin_count DESC;
     `;
 
-    db.query(query, [groupId], (err, results) => {
-        if (err) {
-            console.error('Database error:', err);
-            return res.status(500).send('Server error');
-        }
+    try {
+        const [results] = await db.query(query, [groupId]);
         res.json(results);
-    });
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(500).send('Server error');
+    }
 });
 
 // Добавление студента
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
     const { first_name, middle_name, last_name, group_id } = req.body;
     const query = 'INSERT INTO students (first_name, middle_name, last_name, group_id) VALUES (?, ?, ?, ?)';
 
-    db.query(query, [first_name, middle_name, last_name, group_id], (err, result) => {
-        if (err) {
-            console.error('Database error:', err);
-            return res.status(500).send('Server error');
-        }
+    try {
+        await db.query(query, [first_name, middle_name, last_name, group_id]);
         res.status(201).send('Student added');
-    });
+    } catch (err) {
+        console.error('Database error:', err);
+        res.status(500).send('Server error');
+    }
 });
 
 // Удаление студента и связанных записей в таблице penguins
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
     const studentId = req.params.id;
 
-    // Начало транзакции
-    db.beginTransaction((err) => {
-        if (err) {
-            console.error('Transaction error:', err);
-            return res.status(500).send('Server error');
-        }
+    try {
+        await db.beginTransaction();
 
         // Сначала удаляем записи из таблицы penguins
-        const deletePenguinsQuery = 'DELETE FROM penguins WHERE student_id = ?';
-        db.query(deletePenguinsQuery, [studentId], (err, result) => {
-            if (err) {
-                return db.rollback(() => {
-                    console.error('Failed to delete penguins:', err);
-                    res.status(500).send('Server error');
-                });
-            }
+        await db.query('DELETE FROM penguins WHERE student_id = ?', [studentId]);
 
-            // Затем удаляем студента
-            const deleteStudentQuery = 'DELETE FROM students WHERE id = ?';
-            db.query(deleteStudentQuery, [studentId], (err, result) => {
-                if (err) {
-                    return db.rollback(() => {
-                        console.error('Failed to delete student:', err);
-                        res.status(500).send('Server error');
-                    });
-                }
+        // Затем удаляем студента
+        await db.query('DELETE FROM students WHERE id = ?', [studentId]);
 
-                // Завершение транзакции
-                db.commit((err) => {
-                    if (err) {
-                        return db.rollback(() => {
-                            console.error('Failed to commit transaction:', err);
-                            res.status(500).send('Server error');
-                        });
-                    }
+        // Завершение транзакции
+        await db.commit();
 
-                    res.status(200).send('Student and related penguins deleted');
-                });
-            });
-        });
-    });
+        res.status(200).send('Student and related penguins deleted');
+    } catch (err) {
+        await db.rollback();
+        console.error('Transaction error:', err);
+        res.status(500).send('Server error');
+    }
 });
-
-
-
-
 
 module.exports = router;
