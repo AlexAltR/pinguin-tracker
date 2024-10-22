@@ -1,16 +1,20 @@
 const mysql = require('mysql2');
+// Импортируем модуль mysql2, который используется для работы с базой данных MySQL в Node.js. 
+// В отличие от 'mysql', модуль 'mysql2' поддерживает Promises и имеет улучшенную производительность.
 
 const db = mysql.createConnection({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'root',
-    database: process.env.DB_NAME || 'penguin_tracker',
-    port: process.env.DB_PORT || 3306
+    host: process.env.DB_HOST || 'localhost', // Хост базы данных, берется из переменных окружения (.env). По умолчанию используется 'localhost'.
+    user: process.env.DB_USER || 'root',      // Имя пользователя базы данных. Берется из переменных окружения или по умолчанию 'root'.
+    password: process.env.DB_PASSWORD || 'root', // Пароль для подключения к базе данных. Берется из переменных окружения или по умолчанию 'root'.
+    database: process.env.DB_NAME || 'penguin_tracker', // Имя базы данных. Указано в переменных окружения или по умолчанию 'penguin_tracker'.
+    port: process.env.DB_PORT || 3306         // Порт для подключения к базе данных MySQL. По умолчанию используется стандартный порт MySQL (3306).
 });
 
+// Устанавливаем соединение с базой данных MySQL
 db.connect((err) => {
-    if (err) throw err;
-    console.log('Connected to MySQL Database');
+    if (err) throw err; // Если при подключении возникает ошибка, она выводится и приложение завершается с ошибкой.
+    console.log('Connected to MySQL Database'); // Если подключение успешно, выводим сообщение в консоль.
 });
 
 module.exports = db;
+// Экспортируем объект 'db', чтобы использовать его в других файлах приложения (например, для выполнения запросов к базе данных).
